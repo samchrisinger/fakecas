@@ -67,26 +67,16 @@ func OAuth(c echo.Context) error {
 
 	token := AccessToken{}
 	tokenId := strings.Replace(c.Request().Header().Get("Authorization"), "Bearer ", "", 1)
-	err := AccessTokenCollection.Find(bson.M{
-		"token_id": tokenId,
-	}).One(&token)
-
 	userId := ""
-
-	if err == nil {
-		userId = token.Owner
-	}
-	if err != nil {
+	if err := AccessTokenCollection.Find(bson.M{"token_id": tokenId}).One(&token); err != nil {
 		fmt.Println("Access token", tokenId, "not found")
 		userId = strings.Replace(c.Request().Header().Get("Authorization"), "Bearer ", "", 1)
+	} else {
+		userId = token.Owner
 	}
 
 	result := User{}
-	err = UserCollection.Find(bson.M{
-		"_id": userId,
-	}).One(&result)
-
-	if err != nil {
+	if err := UserCollection.Find(bson.M{"_id": userId}).One(&result); err != nil {
 		fmt.Println("User", userId, "not found")
 		return c.NoContent(http.StatusNotFound)
 	}
